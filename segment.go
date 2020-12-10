@@ -18,7 +18,6 @@
 package go2sky
 
 import (
-	"sync"
 	"sync/atomic"
 
 	"github.com/SkyAPM/go2sky/internal/idgen"
@@ -29,9 +28,16 @@ import (
 )
 
 func newSegmentSpan(defaultSpan *defaultSpan, parentSpan segmentSpan) (s segmentSpan, err error) {
-	ssi := segmentSpanImplPool.Get().(*segmentSpanImpl)
-	*ssi = segmentSpanImpl{
-		defaultSpan: *defaultSpan,
+	var ssi *segmentSpanImpl
+	if enablePool {
+		ssi = segmentSpanImplPool.Get().(*segmentSpanImpl)
+		*ssi = segmentSpanImpl{
+			defaultSpan: *defaultSpan,
+		}
+	} else {
+		ssi = &segmentSpanImpl{
+			defaultSpan: *defaultSpan,
+		}
 	}
 	err = ssi.createSegmentContext(parentSpan)
 	if err != nil {
@@ -214,9 +220,16 @@ func (rs *rootSegmentSpan) createRootSegmentContext(parent segmentSpan) (err err
 }
 
 func newSegmentRoot(segmentSpan *segmentSpanImpl) *rootSegmentSpan {
-	s := rootSegmentSpanPool.Get().(*rootSegmentSpan)
-	*s = rootSegmentSpan{
-		segmentSpanImpl: segmentSpan,
+	var s *rootSegmentSpan
+	if enablePool {
+		s = rootSegmentSpanPool.Get().(*rootSegmentSpan)
+		*s = rootSegmentSpan{
+			segmentSpanImpl: segmentSpan,
+		}
+	} else {
+		s = &rootSegmentSpan{
+			segmentSpanImpl: segmentSpan,
+		}
 	}
 	var init int32
 	s.refNum = &init
@@ -243,28 +256,4 @@ func newSegmentRoot(segmentSpan *segmentSpanImpl) *rootSegmentSpan {
 		s.tracer.reporter.Send(append(s.segment, s))
 	}()
 	return s
-}
-
-var rootSegmentSpanPool = &sync.Pool{
-	New: func() interface{} {
-		return new(rootSegmentSpan)
-	},
-}
-
-var segmentSpanImplPool = &sync.Pool{
-	New: func() interface{} {
-		return new(segmentSpanImpl)
-	},
-}
-
-type PoolSpan interface {
-	PutPool()
-}
-
-func (rs *rootSegmentSpan) PutPool() {
-	rootSegmentSpanPool.Put(rs)
-}
-
-func (s *segmentSpanImpl) PutPool() {
-	segmentSpanImplPool.Put(s)
 }
