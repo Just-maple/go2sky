@@ -220,16 +220,8 @@ func (rs *rootSegmentSpan) createRootSegmentContext(parent segmentSpan) (err err
 }
 
 func newSegmentRoot(segmentSpan *segmentSpanImpl) *rootSegmentSpan {
-	var s *rootSegmentSpan
-	if enablePool {
-		s = rootSegmentSpanPool.Get().(*rootSegmentSpan)
-		*s = rootSegmentSpan{
-			segmentSpanImpl: segmentSpan,
-		}
-	} else {
-		s = &rootSegmentSpan{
-			segmentSpanImpl: segmentSpan,
-		}
+	s := &rootSegmentSpan{
+		segmentSpanImpl: segmentSpan,
 	}
 	var init int32
 	s.refNum = &init

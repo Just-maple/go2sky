@@ -23,17 +23,24 @@ type PoolSpan interface {
 var enablePool = true
 
 func (rs *rootSegmentSpan) PutPool() {
-	if enablePool {
-		rootSegmentSpanPool.Put(rs)
-	}
+	segmentSpanImplPool.Put(rs.segmentSpanImpl)
 }
 
 func (s *segmentSpanImpl) PutPool() {
-	if enablePool {
-		segmentSpanImplPool.Put(s)
-	}
+	segmentSpanImplPool.Put(s)
 }
 
 func SetPoolEnable(status bool) {
 	enablePool = status
+}
+
+func PutSpanPool(spans []ReportedSpan) {
+	if !enablePool {
+		return
+	}
+	for i := range spans {
+		if poolSpan, ok := spans[i].(PoolSpan); ok {
+			poolSpan.PutPool()
+		}
+	}
 }

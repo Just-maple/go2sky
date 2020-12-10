@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/SkyAPM/go2sky"
+	"github.com/SkyAPM/go2sky/reporter"
 )
 
 func do(t *go2sky.Tracer) {
@@ -21,7 +22,7 @@ func do(t *go2sky.Tracer) {
 	for i := 0; i < 5; i++ {
 		var tmpSp go2sky.Span
 		tmpSp, ctx, _ = t.CreateLocalSpan(ctx)
-		defer tmpSp.End()
+		tmpSp.End()
 	}
 	sp2.End()
 	sp.End()
@@ -29,6 +30,7 @@ func do(t *go2sky.Tracer) {
 
 func newTracer() *go2sky.Tracer {
 	rp, _ := newTestReporter()
+	rp = reporter.WrapPoolReporter(rp)
 	t, _ := go2sky.NewTracer("test", go2sky.WithReporter(rp))
 	return t
 }
@@ -55,11 +57,12 @@ func BenchmarkDisablePoolP(b *testing.B) {
 	run(b, true)
 }
 
-//5s BenchmarkDisablePoolP-12    	 1488094	      4190 ns/op	    6118 B/op	      70 allocs/op
-
 func BenchmarkPoolP(b *testing.B) {
 	go2sky.SetPoolEnable(true)
 	run(b, true)
 }
 
-//5s BenchmarkPoolP-12    	 1727493	      3634 ns/op	    4134 B/op	      62 allocs/op
+//BenchmarkDisablePoolP
+//BenchmarkDisablePoolP-12    	  306441	      4027 ns/op	    6118 B/op	      70 allocs/op
+//BenchmarkPoolP
+//BenchmarkPoolP-12           	  334264	      3452 ns/op	    3971 B/op	      62 allocs/op

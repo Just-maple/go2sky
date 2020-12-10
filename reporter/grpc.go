@@ -195,10 +195,6 @@ func (r *gRPCReporter) Send(spans []go2sky.ReportedSpan) {
 			}
 		}
 		segmentObject.Spans[i].Refs = srr
-
-		if poolSpan, ok := spans[i].(go2sky.PoolSpan); ok {
-			poolSpan.PutPool()
-		}
 	}
 	defer func() {
 		// recover the panic caused by close sendCh
