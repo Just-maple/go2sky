@@ -166,8 +166,8 @@ func (r *gRPCReporter) Send(spans []go2sky.ReportedSpan) {
 			SpanLayer:     s.SpanLayer(),
 			ComponentId:   s.ComponentID(),
 			IsError:       s.IsError(),
-			Tags:          s.Tags(),
-			Logs:          s.Logs(),
+			Tags:          s.Tags()[:],
+			Logs:          s.Logs()[:],
 		}
 		srr := make([]*agentv3.SegmentReference, 0)
 		if i == (spanSize-1) && spanCtx.ParentSpanID > -1 {
@@ -195,6 +195,10 @@ func (r *gRPCReporter) Send(spans []go2sky.ReportedSpan) {
 			}
 		}
 		segmentObject.Spans[i].Refs = srr
+
+		if poolSpan, ok := spans[i].(go2sky.PoolSpan); ok {
+			poolSpan.PutPool()
+		}
 	}
 	defer func() {
 		// recover the panic caused by close sendCh
