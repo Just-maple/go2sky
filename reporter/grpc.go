@@ -154,6 +154,11 @@ func (r *gRPCReporter) Send(spans []go2sky.ReportedSpan) {
 		ServiceInstance: r.serviceInstance,
 	}
 	for i, s := range spans {
+		var tags []*common.KeyStringValuePair
+		var logs []*agentv3.Log
+		copy(tags, s.Tags())
+		copy(logs, s.Logs())
+
 		spanCtx := s.Context()
 		segmentObject.Spans[i] = &agentv3.SpanObject{
 			SpanId:        spanCtx.SpanID,
@@ -166,8 +171,8 @@ func (r *gRPCReporter) Send(spans []go2sky.ReportedSpan) {
 			SpanLayer:     s.SpanLayer(),
 			ComponentId:   s.ComponentID(),
 			IsError:       s.IsError(),
-			Tags:          s.Tags()[:],
-			Logs:          s.Logs()[:],
+			Tags:          tags,
+			Logs:          logs,
 		}
 		srr := make([]*agentv3.SegmentReference, 0)
 		if i == (spanSize-1) && spanCtx.ParentSpanID > -1 {
