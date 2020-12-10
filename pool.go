@@ -4,12 +4,6 @@ import (
 	"sync"
 )
 
-var rootSegmentSpanPool = &sync.Pool{
-	New: func() interface{} {
-		return new(rootSegmentSpan)
-	},
-}
-
 var segmentSpanImplPool = &sync.Pool{
 	New: func() interface{} {
 		return new(segmentSpanImpl)
@@ -23,11 +17,18 @@ type PoolSpan interface {
 var enablePool = true
 
 func (rs *rootSegmentSpan) PutPool() {
-	segmentSpanImplPool.Put(rs.segmentSpanImpl)
+	rs.segmentSpanImpl.PutPool()
 }
 
 func (s *segmentSpanImpl) PutPool() {
+	s.defaultSpan.Refs = s.defaultSpan.Refs[:0]
+	s.defaultSpan.Logs = s.defaultSpan.Logs[:0]
+	s.defaultSpan.Tags = s.defaultSpan.Tags[:0]
 	segmentSpanImplPool.Put(s)
+}
+
+func PoolState() bool {
+	return enablePool
 }
 
 func SetPoolEnable(status bool) {

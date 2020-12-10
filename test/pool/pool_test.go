@@ -22,6 +22,9 @@ func do(t *go2sky.Tracer) {
 	for i := 0; i < 5; i++ {
 		var tmpSp go2sky.Span
 		tmpSp, ctx, _ = t.CreateLocalSpan(ctx)
+		for j := 0; j < 10; j++ {
+			tmpSp.Tag(go2sky.TagDBInstance, "")
+		}
 		tmpSp.End()
 	}
 	sp2.End()
